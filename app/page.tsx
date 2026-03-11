@@ -69,7 +69,7 @@ export default function Dashboard() {
     }
   }, [status.status]);
 
-  // Upload
+  // Here you can upload Docs
   async function handleUpload() {
     if (!file || uploading || status.status === "processing") return;
     setUploading(true);
