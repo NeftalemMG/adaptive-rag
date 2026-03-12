@@ -1,3 +1,4 @@
+// Base URL for the FastAPI backend running locally
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
 
@@ -7,6 +8,7 @@ interface StatusRes { status: string; chunks: number; error: string | null }
 interface Source    { page: number; text: string }
 interface QueryRes  { query: string; answer: string; sources: Source[] }
 
+// Custom hook to poll the backend status every 4 seconds
 function useStatus(ms = 4000) {
   const [s, setS]           = useState<StatusRes>({ status: "idle", chunks: 0, error: null });
   const [reachable, setR]   = useState(true);
@@ -20,6 +22,7 @@ function useStatus(ms = 4000) {
   return { status: s, reachable, refetch: poll };
 }
 
+// Reusable spinner component shown during async operations
 function Spinner() {
   return (
     <span style={{
@@ -69,6 +72,7 @@ export default function Dashboard() {
     }
   }, [status.status]);
 
+  // Upload the selected PDF file to the backend for processing
   // Here you can upload Docs
   async function handleUpload() {
     if (!file || uploading || status.status === "processing") return;
@@ -100,7 +104,7 @@ export default function Dashboard() {
     } catch {}
   }
 
-  // Query
+  // Always unblock the input, no matter what happened
   async function handleQuery() {
     const q = query.trim();
     if (!q || querying || status.status !== "done") return;
