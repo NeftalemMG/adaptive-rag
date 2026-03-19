@@ -8,15 +8,17 @@ interface StatusRes { status: string; chunks: number; error: string | null }
 interface Source    { page: number; text: string }
 interface QueryRes  { query: string; answer: string; sources: Source[] }
 
-// Custom hook to poll the backend status every 4 seconds
-function useStatus(ms = 4000) {
+// // Custom hook to poll the backend status every 4 seconds
+function useStatus(ms = 10000) {
   const [s, setS]           = useState<StatusRes>({ status: "idle", chunks: 0, error: null });
   const [reachable, setR]   = useState(true);
   const poll = useCallback(async () => {
     try {
-      const r = await fetch(`${API}/status`);
+      const r = await fetch(`${API}/status`,);
       if (r.ok) { setS(await r.json()); setR(true); }
-    } catch { setR(false); }
+    } catch(err) { 
+      console.log("Error calling status", err)
+     }
   }, []);
   useEffect(() => { poll(); const t = setInterval(poll, ms); return () => clearInterval(t); }, [poll, ms]);
   return { status: s, reachable, refetch: poll };
@@ -118,7 +120,7 @@ export default function Dashboard() {
       const r = await fetch(`${API}/query`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query: q, temperature: 0.7, max_new_tokens: 100 }),
+        body: JSON.stringify({ query: q, temperature: 0.7, max_new_tokens: 150 }),
       });
       const d: QueryRes = await r.json();
       if (r.ok) {
