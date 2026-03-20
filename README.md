@@ -1,61 +1,53 @@
-# Adaptive RAG — Frontend
+## Adaptive RAG — Frontend
 
-A Next.js interface for the [Adaptive Multi-Vector Indexing RAG Pipeline](https://github.com/Ujk768/rag-pipeline-backend). Upload PDFs, ask natural language questions, and get grounded answers with page-level source citations — powered by a locally-running backend using pgvector and a configurable Hugging Face LLM.
+### Setup
 
----
-
-## Features
-
-- **PDF Upload** — Upload documents and monitor processing progress
-- **Natural Language Q&A** — Ask questions about uploaded documents
-- **Source Citations** — Answers include page-level references from the source document
-- **Configurable Generation** — Adjust temperature and token limits per query
-
----
-
-## Prerequisites
-
-- [Node.js](https://nodejs.org/) v18 or higher
-- The [rag-pipeline-backend](https://github.com/Ujk768/rag-pipeline-backend) running locally on port `8000`
-
----
-
-## Setup
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/NeftalemMG/adaptive-rag.git
-cd adaptive-rag
-```
-
-### 2. Install dependencies
+#### 1. Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure environment variables
+#### 2. Configure the API URL
 
-Create a `.env.local` file in the project root:
+Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
-> Update the URL if your backend is running on a different host or port.
-
-### 4. Start the development server
+#### 3. Run the dev server
 
 ```bash
 npm run dev
 ```
 
-The app will be available at [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## Backend Setup
+### Features
+
+#### Normal Mode (dev toggle OFF)
+- Upload a PDF
+- Select no pruning strategy (default)
+- Ask a question, get an answer with source pages
+
+#### Dev Mode (click `</>` dev in navbar)
+Exposes the full backend pipeline:
+
+1. **Pruning Strategy Selector** — choose between `none`, `cosine`, `cosine_whitened`, `kmeans`, `mmr`
+2. **Pipeline Inspector** — step-by-step breakdown of ingestion → chunking → embedding → pruning → storage
+3. **Pruning Report** — per-chunk scores, threshold, retention rate, score distribution
+4. **Embedding Visualizer** — 768D vector heat map (sampled) per chunk
+5. **Query Parameters** — temperature slider, max tokens, MaxSim re-ranking toggle
+
+#### Strategy reset
+Switching pruning strategies automatically calls `/reset` before re-uploading, so stale vectors from a previous strategy don't pollute the new run.
+
+---
+
+### Backend Setup
 
 This frontend requires the RAG backend to be running. See the [backend repo](https://github.com/Ujk768/rag-pipeline-backend) for full setup instructions. In short:
 
@@ -69,37 +61,14 @@ python -m spacy download en_core_web_sm
 # Then start the server
 uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
-
 ---
 
-## Usage
+## API endpoints used
 
-1. **Upload a PDF** — Use the upload interface to submit a document. Processing runs in the background; poll `/status` to track progress.
-2. **Ask a question** — Once processing is complete (`status: done`), type a natural language question.
-3. **Review the answer** — The response includes the generated answer along with source chunks and page numbers from the original document.
-
----
-
-## Project Structure
-
-```
-adaptive-rag/
-├── app/              # Next.js App Router pages and layouts
-├── components/       # Reusable React components
-├── public/           # Static assets
-├── next.config.ts    # Next.js configuration
-├── tsconfig.json     # TypeScript configuration
-└── package.json      # Dependencies and scripts
-```
-
----
-
-## Related
-
-- **Backend:** [rag-pipeline-backend](https://github.com/Ujk768/rag-pipeline-backend)
-
----
-
-## License
-
-MIT
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/upload?pruning_strategy=` | Upload PDF, starts background processing |
+| GET | `/status` | Poll processing state (polled every 1.5s) |
+| GET | `/pruning-report` | Full per-chunk pruning stats |
+| POST | `/query` | Ask a question, get answer + sources |
+| GET | `/reset` | Clear pgvector + in-memory state |
