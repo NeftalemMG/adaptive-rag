@@ -427,10 +427,10 @@ export default function PruningPipeline({ processingDone, strategy }: PruningPip
           <Collapsible title="Score Distribution" subtitle="pruning scores across all chunks" defaultOpen={false}>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
-                { label: "min", val: score_stats.min.toFixed(6) },
-                { label: "max", val: score_stats.max.toFixed(6) },
-                { label: "mean", val: score_stats.mean.toFixed(6) },
-                { label: "std", val: score_stats.std.toFixed(6) },
+                { label: "min", val: score_stats?.min.toFixed(6) },
+                { label: "max", val: score_stats?.max.toFixed(6) },
+                { label: "mean", val: score_stats?.mean.toFixed(6) },
+                { label: "std", val: score_stats?.std.toFixed(6) },
               ].map((s) => (
                 <div key={s.label} className="bg-charcoal/40 rounded-lg p-2.5 border border-cream/5">
                   <p className="text-mono text-[9px] text-cream/25">{s.label}</p>
@@ -441,21 +441,21 @@ export default function PruningPipeline({ processingDone, strategy }: PruningPip
           </Collapsible>
 
           {/* Threshold */}
-          <Collapsible title="Decision Threshold" subtitle={`value: ${threshold.value.toFixed(6)}`} defaultOpen={false}>
+          <Collapsible title="Decision Threshold" subtitle={`value: ${threshold?.value.toFixed(6)}`} defaultOpen={false}>
             <div className="space-y-1.5">
               <div className="flex items-center gap-3">
                 <div className="w-6 h-px bg-clay" />
-                <p className="text-mono text-[10px] text-clay">{threshold.value.toFixed(6)}</p>
+                <p className="text-mono text-[10px] text-clay">{threshold?.value.toFixed(6)}</p>
               </div>
-              <p className="text-mono text-[10px] text-cream/35">{threshold.description}</p>
+              <p className="text-mono text-[10px] text-cream/35">{threshold?.description}</p>
             </div>
           </Collapsible>
 
           {/* Strategy metadata */}
-          {Object.keys(strategy_metadata).length > 0 && (
+          {strategy_metadata && Object.keys(strategy_metadata)?.length > 0 && (
             <Collapsible title="Strategy Parameters" defaultOpen={false}>
               <div className="space-y-1.5">
-                {Object.entries(strategy_metadata).map(([k, v]) => (
+                {strategy_metadata && Object.entries(strategy_metadata)?.map(([k, v]) => (
                   <div key={k} className="flex items-start gap-3">
                     <span className="text-mono text-[10px] text-cream/25 w-32 flex-shrink-0">{k}</span>
                     <span className="text-mono text-[10px] text-cream/55">{String(v)}</span>
@@ -471,7 +471,7 @@ export default function PruningPipeline({ processingDone, strategy }: PruningPip
       {activeTab === "chunks" && (
         <div className="space-y-3">
           <div className="flex items-center gap-3">
-            <p className="text-mono text-xs text-cream/25">{per_chunk_detail.length} chunks — click any to expand</p>
+            <p className="text-mono text-xs text-cream/25">{per_chunk_detail?.length} chunks — click any to expand</p>
             <div className="ml-auto flex items-center gap-3 text-mono text-[10px]">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-moss inline-block" /><span className="text-cream/35">kept</span>
@@ -485,7 +485,7 @@ export default function PruningPipeline({ processingDone, strategy }: PruningPip
           {/* Score bars overview */}
           <Collapsible title="Score Overview" subtitle="all chunks ranked by pruning score" defaultOpen={false}>
             <div className="space-y-1">
-              {per_chunk_detail.map((chunk, i) => (
+              {per_chunk_detail?.map((chunk, i) => (
                 <ScoreBar key={i} score={chunk.score} kept={chunk.kept} />
               ))}
             </div>
@@ -493,7 +493,7 @@ export default function PruningPipeline({ processingDone, strategy }: PruningPip
 
           {/* Chunk cards */}
           <div className="space-y-1.5 max-h-[640px] overflow-y-auto pr-0.5">
-            {per_chunk_detail.map((chunk, i) => {
+            {per_chunk_detail?.map((chunk, i) => {
               // Try to match this pruning-report chunk to a stored chunk by page + content prefix
               const key = `${chunk.page_number}:${chunk.content_preview.slice(0, 60)}`;
               const stored = chunkMap.get(key);
