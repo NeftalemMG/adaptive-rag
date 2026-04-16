@@ -1,6 +1,6 @@
 // API types derived directly from backend schemas
 
-export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://rag-pipeline-backend.fly.dev" ||"http://localhost:8000";
 
 export type PruningStrategy = "none" | "cosine" | "cosine_whitened" | "kmeans" | "mmr";
 
