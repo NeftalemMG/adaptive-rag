@@ -69,11 +69,10 @@ export default function UploadPanel({
     if (!file) return;
     setUploading(true);
     setError(null);
-    setProcessingStatus({ status: "processing", chunks: 0, error: null, mode: null });
     onProcessingStart();
     try {
       await uploadPDF(file, selectedStrategy);
-      pollRef.current = setInterval(pollStatus, 1500);
+      pollRef.current = setInterval(pollStatus, 10000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
       setUploading(false);
