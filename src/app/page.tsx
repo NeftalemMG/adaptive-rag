@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ProcessingStatus, PruningStrategy, resetData } from "@/lib/api";
+import { ProcessingStatus, PruningStrategy, resetData, warmupAPI } from "@/lib/api";
 import UploadPanel from "@/components/UploadPanel";
 import QueryPanel from "@/components/QueryPanel";
 import DevModePanel from "@/components/DevModePanel";
@@ -10,9 +10,14 @@ function NavBar({ devMode, onToggleDev }: { devMode: boolean; onToggleDev: () =>
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
+    // warm up API on first visit to mitigate cold start latency
+    warmupAPI().then(() => console.log("API warmed up")).catch(() => console.log("API warmup failed")); 
+    
     const handler = () => setScrolled(window.scrollY > 60);
     window.addEventListener("scroll", handler);
     return () => window.removeEventListener("scroll", handler);
+
+
   }, []);
 
   return (
@@ -213,7 +218,8 @@ export default function Home() {
   const [isReady, setIsReady] = useState(false);
   const [strategy, setStrategy] = useState<PruningStrategy>("none");
   const [resetKey, setResetKey] = useState(0);
-
+   const [disableUploadBtn, setDisableUploadBtn] = useState(true);
+  
   const handleProcessingComplete = (status: ProcessingStatus) => {
     setProcessingStatus(status);
     setIsReady(status.status === "done");
@@ -226,7 +232,6 @@ export default function Home() {
 
   const handleStrategyChange = async (s: PruningStrategy) => {
     if (s !== strategy) {
-      try { await resetData(); } catch { /* ignore */ }
       setStrategy(s);
       setIsReady(false);
       setProcessingStatus(null);
@@ -276,7 +281,7 @@ export default function Home() {
               <div className="glass rounded-2xl p-6 border border-cream/8">
                 <div className="flex items-center gap-2 mb-5">
                   <div className="w-1.5 h-1.5 rounded-full bg-clay" />
-                  <h3 className="text-mono text-xs text-cream/50 uppercase tracking-widest">Upload</h3>
+                  <h3 className="text-mono text-xs text-cream/50 uppercase tracking-widest">Click to Upload Document</h3>
                 </div>
                 <UploadPanel
                   key={resetKey}
@@ -285,6 +290,8 @@ export default function Home() {
                   devMode={devMode}
                   selectedStrategy={strategy}
                   onStrategyChange={handleStrategyChange}
+                  disableUploadBtn={disableUploadBtn}
+                  setDisableUploadBtn={setDisableUploadBtn}
                 />
               </div>
 
@@ -298,7 +305,7 @@ export default function Home() {
                     </span>
                   )}
                 </div>
-                <QueryPanel ready={isReady} devMode={devMode} />
+                <QueryPanel ready={isReady} devMode={devMode} strategy={strategy} />
               </div>
             </div>
 
@@ -321,7 +328,7 @@ export default function Home() {
             <span className="text-mono text-xs text-cream/30">Adaptive RAG</span>
           </div>
           <div className="text-mono text-[10px] text-cream/20">
-            all-mpnet-base-v2 · pgvector · FastAPI
+            pgvector · FastAPI
           </div>
         </div>
       </footer>

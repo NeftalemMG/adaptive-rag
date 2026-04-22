@@ -277,7 +277,7 @@ export default function DevModePanel({ processingStatus, strategy }: DevModePane
       </div>
 
       {/* Full pruning + embeddings report */}
-      {isDone && (
+      {isDone && strategy.toLowerCase() !== "none" && (
         <div className="border-t border-cream/8 pt-6">
           <PruningPipeline processingDone={isDone} strategy={strategy} />
         </div>

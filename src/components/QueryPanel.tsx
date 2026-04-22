@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { queryDocument, QueryResponse } from "@/lib/api";
+import { PruningStrategy, queryDocument, QueryResponse } from "@/lib/api";
 
 interface QueryPanelProps {
   ready: boolean;
   devMode: boolean;
+  strategy: string;
 }
 
-export default function QueryPanel({ ready, devMode }: QueryPanelProps) {
+export default function QueryPanel({ ready, devMode, strategy }: QueryPanelProps) {
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [response, setResponse] = useState<QueryResponse | null>(null);
@@ -23,9 +24,11 @@ export default function QueryPanel({ ready, devMode }: QueryPanelProps) {
     setError(null);
     setResponse(null);
     try {
+      console.log("Strategy:", strategy);
       const res = await queryDocument({
         query: query.trim(),
         temperature,
+        pruning_strategy: strategy as PruningStrategy || "none",
         max_new_tokens: maxTokens,
         use_maxsim: useMaxsim,
       });
@@ -138,7 +141,7 @@ export default function QueryPanel({ ready, devMode }: QueryPanelProps) {
               handleQuery();
             }
           }}
-          placeholder={ready ? "Ask anything about your document..." : "Upload a document first"}
+          placeholder={ready ? "Ask anything about your document..." : "Process the document first"}
           disabled={!ready || loading}
           rows={3}
           className={`w-full rounded-xl p-4 pr-14 text-sm resize-none transition-all duration-200 outline-none ${

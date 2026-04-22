@@ -2,13 +2,20 @@
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://rag-pipeline-backend.fly.dev" ||"http://localhost:8000";
 
-export type PruningStrategy = "none" | "cosine" | "cosine_whitened" | "kmeans" | "mmr";
+export type PruningStrategy =
+  | "none"
+  | "cosine"
+  | "cosine_whitened"
+  | "kmeans"
+  | "mmr";
 
+
+type ProcessingModes = "full_context" | "rag";
 export interface ProcessingStatus {
   status: "idle" | "processing" | "done" | "failed";
   chunks: number;
   error: string | null;
-  mode: "full_context" | "rag" | null;
+  mode: ProcessingModes | null;
   pruning_strategy?: string;
   pruning_summary?: PruningSummary;
 }
@@ -51,6 +58,7 @@ export interface PruningReport {
 
 export interface QueryRequest {
   query: string;
+  pruning_strategy: PruningStrategy;
   temperature?: number;
   max_new_tokens?: number;
   use_maxsim?: boolean;
@@ -87,13 +95,12 @@ export interface StoredChunksResponse {
 
 export async function uploadPDF(
   file: File,
-  pruningStrategy: PruningStrategy
 ): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append("file", file);
   const res = await fetch(
-    `${API_BASE}/upload?pruning_strategy=${pruningStrategy}`,
-    { method: "POST", body: formData }
+    `${API_BASE}/upload`,
+    { method: "POST", body: formData },
   );
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Upload failed" }));
@@ -111,7 +118,9 @@ export async function getStatus(): Promise<ProcessingStatus> {
 export async function getPruningReport(): Promise<PruningReport> {
   const res = await fetch(`${API_BASE}/pruning-report`);
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "No report available" }));
+    const err = await res
+      .json()
+      .catch(() => ({ detail: "No report available" }));
     throw new Error(err.detail || "No report available");
   }
   return res.json();
@@ -135,11 +144,58 @@ export async function resetData(): Promise<void> {
   if (!res.ok) throw new Error("Reset failed");
 }
 
-export async function getStoredChunks(limit = 20): Promise<StoredChunksResponse> {
+export async function getStoredChunks(
+  limit = 20,
+): Promise<StoredChunksResponse> {
   const res = await fetch(`${API_BASE}/chunks?limit=${limit}`);
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ detail: "No chunks available" }));
+    const err = await res
+      .json()
+      .catch(() => ({ detail: "No chunks available" }));
     throw new Error(err.detail || "No chunks available");
   }
   return res.json();
 }
+
+export async function warmupAPI(): Promise<void> {
+  const res = await fetch(`${API_BASE}/health`);
+  return res.ok ? res.json() : Promise.reject(new Error("API is not healthy"));
+}
+
+type DocumentResponse = {
+  has_document: boolean;
+  document_name?: string;
+  total_pages?: number;
+  uploaded_at?: string;
+  mode: ProcessingModes;
+  active_chunks?: number;
+};
+
+export const getDocument = async (): Promise<DocumentResponse> => {
+  const res = await fetch(`${API_BASE}/document`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Fetch failed" }));
+    throw new Error(err.detail || "Fetch failed");
+  }
+  return res.json();
+};
+
+type PrunningApiRes = {
+  message: string;
+  report: PruningReport;
+}
+
+export const pruneDocument = async (strategy: PruningStrategy): Promise<PrunningApiRes> => {
+  const res = await fetch(`${API_BASE}/prune?pruning_strategy=${strategy}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Pruning failed" }));
+    throw new Error(err.detail || "Pruning failed");
+  }
+  return res.json();
+};
